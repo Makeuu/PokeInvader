@@ -4,6 +4,88 @@ window.onload = function init() {
   game.start();
 };
 
+//Definition des objets
+var etat_personnage = {
+  enVie : 0,
+  detruit : 1,
+};
+
+function ObjetGraphique(x1, y1, w1, h1) {
+  var x=x1, y=y1, w=w1, h=h1;
+  var speed = 1;
+  function draw(ctx) {
+    ctx.fillRect(x, y, w, h);
+  }
+
+  function getX() {
+    return x;
+  }
+
+  function setX(x1) {
+    x = x1;
+  }
+  function getY() {
+    return y;
+  }
+
+  function setY(y1) {
+    y = y1;
+  }
+  function getW() {
+    return w;
+  }
+  function getSpeed(){
+    return speed;
+  }
+  function setSpeed(s1){
+    speed = s1;
+  }
+
+  return {
+    draw:draw,
+    getSpeed:getSpeed,
+    setSpeed:setSpeed,
+    getX:getX,
+    getY: getY,
+    setX: setX,
+    setY:setY,
+    getW:getW
+  }
+}
+
+function Vaisseau(x, y, w, h, v){
+  var api = new ObjetGraphique(x, y, w, h);
+  var vie = v;
+  var etat = etat_personnage.enVie;
+  // redéfinition
+  var superDraw = api.draw;
+
+  api.draw = function(ctx) {
+    //console.log('draw redéfini dans Vaisseau');
+    ctx.fillStyle = 'red';
+    // appel de la méthode de la pseudo classe mère que l'on
+    // a redéfini
+    superDraw.call(this, ctx);
+  }
+  return api;
+}
+
+function Monstre(x, y, w, h, e){
+  var api = new ObjetGraphique(x, y, w, h);
+  var etat = etat_personnage.enVie;
+  // redéfinition
+  var superDraw = api.draw;
+
+
+  api.draw = function(ctx) {
+    //console.log('draw redéfini dans Monstre');
+    ctx.fillStyle = 'green';
+    // appel de la méthode de la pseudo classe mère que l'on
+    // a redéfini
+    superDraw.call(this, ctx);
+  }
+  return api;
+}
 
 // GAME FRAMEWORK STARTS HERE
 var GF = function(){
@@ -11,13 +93,12 @@ var GF = function(){
   var canvas, ctx, w, h;
 
   // etat du jeu
-
-
   var etats = {
     menuPrincipal : 0,
     jeuEnCours : 1,
     gameOver : 2,
   };
+
   var etatCourant = etats.jeuEnCours;
 
   // vars for counting frames/s, used by the measureFPS function
@@ -38,6 +119,19 @@ var GF = function(){
     speed:100, // pixels/s this time !
     boundingCircleRadius: 70
   };
+
+  var objetsGraphiques = [];
+  var objetsMonstres = [];
+  for(var i=1; i<=5; i++){
+    for (var j=1; j<=10; j++){
+      var monstre = new Monstre(j*50, i*50, 30, 30);
+      objetsMonstres.push(monstre);
+    }
+  }
+
+  var objetsVaisseaux = [];
+  var vaisseau = new Vaisseau(600, 500, 60, 30);
+  objetsVaisseaux.push(vaisseau);
 
   // array of balls to animate
   var ballArray = [];
@@ -79,42 +173,6 @@ var GF = function(){
     ctx.clearRect(0, 0, w, h);
   }
 
-  // Functions for drawing the monster and maybe other objects
-  function drawMyMonster(x, y) {
-    // draw a big monster !
-    // head
-
-    // save the context
-    ctx.save();
-
-    // translate the coordinate system, draw relative to it
-    ctx.translate(x-50, y-50);
-
-    // (0, 0) is the top left corner of the monster.
-    ctx.strokeRect(0, 0, 100, 100);
-
-    // eyes
-    ctx.fillRect(20, 20, 10, 10);
-    ctx.fillRect(65, 20, 10, 10);
-
-    // nose
-    ctx.strokeRect(45, 40, 10, 40);
-
-    // mouth
-    ctx.strokeRect(35, 84, 30, 10);
-
-    // teeth
-    ctx.fillRect(38, 84, 10, 10);
-    ctx.fillRect(52, 84, 10, 10);
-
-    // Draw bounding circle
-    ctx.beginPath();
-    ctx.arc(50, 50, monster.boundingCircleRadius, 0, 2*Math.PI);
-    ctx.stroke();
-    // restore the context
-    ctx.restore();
-  }
-
   function timer(currentTime) {
     var delta = currentTime - oldTime;
     oldTime = currentTime;
@@ -137,16 +195,20 @@ var GF = function(){
       // number of ms since last frame draw
       delta = timer(time);
 
-
-
-      // draw the monster
-      drawMyMonster(monster.x, monster.y);
-
-      // Check inputs and move the monster
-      updateMonsterPosition(delta);
-
-      // update and draw balls
-      updateBalls(delta);
+      objetsMonstres.forEach(function f(elem) {
+        //Dessiner
+        elem.draw(ctx);
+        updateMonster(delta, elem);
+        //Update les positions
+        //Test des collisions
+      });
+      objetsVaisseaux.forEach(function f(elem) {
+        //Dessiner
+        elem.draw(ctx);
+        //Update les positions
+        updateVaisseauPosition(delta, elem);
+        //Test des collisions
+      });
       break;
       case etats.gameOver:
       //console.log("GAME OVER");
@@ -154,7 +216,7 @@ var GF = function(){
       ctx.fillText("Press SPACE to start again", 100, 150);
 
       if(inputStates.space) {
-        console.log("space enfoncee");
+        //console.log("space enfoncee");
         createBalls(4);
         etatCourant = etats.jeuEnCours;
       }
@@ -165,68 +227,46 @@ var GF = function(){
   };
 
 
-  function updateMonsterPosition(delta) {
-    monster.speedX = monster.speedY = 0;
+  function updateVaisseauPosition(delta, elem) {
+    elem.speedX = elem.speedY = 0;
     // check inputStates
     if (inputStates.left) {
-      monster.speedX = -monster.speed;
+      elem.speedX = -elem.speed;
     }
-    if (inputStates.up) {
-      monster.speedY = -monster.speed;
-    }
-    if (inputStates.right) {
-      monster.speedX = monster.speed;
-    }
-    if (inputStates.down) {
-      monster.speedY = monster.speed;
-    }
-    if (inputStates.space) {
-    }
-    if (inputStates.mousePos) {
-    }
-    if (inputStates.mousedown) {
-      monster.speed = 500;
-    } else {
-      // mouse up
-      monster.speed = 100;
-    }
-
-    // COmpute the incX and inY in pixels depending
-    // on the time elasped since last redraw
-    monster.x += calcDistanceToMove(delta, monster.speedX);
-    monster.y += calcDistanceToMove(delta, monster.speedY);
+    /*if (inputStates.up) {
+    elem.speedY = -elem.speed;
+  }*/
+  if (inputStates.right) {
+    elem.speedX = elem.speed;
   }
+  elem.speed = 100;
+  // COmpute the incX and inY in pixels depending
+  // on the time elasped since last redraw
+  elem.setX(elem.getX() + calcDistanceToMove(delta, elem.speedX));
+  elem.setY(elem.getY() + calcDistanceToMove(delta, elem.speedY));
+}
 
-  function updateBalls(delta) {
-    // for each ball in the array
-    for(var i=0; i < ballArray.length; i++) {
-      var ball = ballArray[i];
+function updateMonster(delta, elem) {
+  // for each ball in the array
 
-      // 1) move the ball
-      ball.move();
+  // 1) move the ball
+  elem.setX(elem.getX() + 2*elem.getSpeed() );
+  //console.log(elem.getSpeed());
 
-      // 2) test if the ball collides with a wall
-      testCollisionWithWalls(ball);
+  // 2) test if the ball collides with a wall
+  testCollisionWithWalls(elem);
 
-      // teste collisions avec monstre
-      /*  if(circleCollide(ball.x, ball.y, ball.radius,
-      monster.x, monster.y, monster.boundingCircleRadius)) {
-      //console.log("collision");
-      ball.color = 'red';
-      monster.dead = true;
-    }*/
+  //Collision avec missiles
 
-    if(circRectsOverlap(monster.x-50, monster.y-50, 100, 100, ball.x, ball.y, ball.radius)) {
+  /*if(circRectsOverlap(monster.x-50, monster.y-50, 100, 100, ball.x, ball.y, ball.radius)) {
 
-      //console.log("collision");
-      ball.color = 'red';
-      monster.dead = true;
+  //console.log("collision");
+  ball.color = 'red';
+  monster.dead = true;
+}*/
 
-    }
-
-    // 3) draw the ball
-    ball.draw();
-  }
+// 3) draw the ball
+//monstre.draw(ctx);
 }
 
 // Teste collisions entre cercles
@@ -241,44 +281,33 @@ function rectsOverlap(x0, y0, w0, h0, x2, y2, w2, h2) {
   return false;
 
   if ((y0 > (y2 + h2)) || ((y0 + h0) < y2))
-  return false;
+  //return false;
   return true;
 }
 
 // Collisions between rectangle and circle
-function circRectsOverlap(x0, y0, w0, h0, cx, cy, r) {
-  var testX=cx;
-  var testY=cy;
+/*function circRectsOverlap(x0, y0, w0, h0, cx, cy, r) {
+var testX=cx;
+var testY=cy;
 
-  if (testX < x0) testX=x0;
-  if (testX > (x0+w0)) testX=(x0+w0);
-  if (testY < y0) testY=y0;
-  if (testY > (y0+h0)) testY=(y0+h0);
+if (testX < x0) testX=x0;
+if (testX > (x0+w0)) testX=(x0+w0);
+if (testY < y0) testY=y0;
+if (testY > (y0+h0)) testY=(y0+h0);
 
-  return (((cx-testX)*(cx-testX)+(cy-testY)*(cy-testY))<r*r);
-}
+return (((cx-testX)*(cx-testX)+(cy-testY)*(cy-testY))<r*r);
+}*/
 
-
-function testCollisionWithWalls(ball) {
+function testCollisionWithWalls(monstre) {
   // left
-  if (ball.x < ball.radius) {
-    ball.x = ball.radius;
-    ball.angle = -ball.angle + Math.PI;
+  if (monstre.getX() < (monstre.getW()*-1) ) {
+    monstre.setSpeed(1);
+    monstre.setY(monstre.getY()+10);
   }
   // right
-  if (ball.x > w - (ball.radius)) {
-    ball.x = w - (ball.radius);
-    ball.angle = -ball.angle + Math.PI;
-  }
-  // up
-  if (ball.y < ball.radius) {
-    ball.y = ball.radius;
-    ball.angle = -ball.angle;
-  }
-  // down
-  if (ball.y > h - (ball.radius)) {
-    ball.y = h - (ball.radius);
-    ball.angle =-ball.angle;
+  if (monstre.getX() > canvas.width ) {
+    monstre.setSpeed(-1);
+    monstre.setY(monstre.getY()+10);
   }
 }
 
@@ -291,134 +320,133 @@ function getMousePos(evt) {
   };
 }
 
-function createBalls(numberOfBalls) {
-  for(var i=0; i < numberOfBalls; i++) {
-    // Create a ball with random position and speed.
-    // You can change the radius
-    var ball =  new Ball(w*Math.random(),
-    h*Math.random(),
-    (2*Math.PI)*Math.random(),
-    50,
-    30);
+/*function createBalls(numberOfBalls) {
+for(var i=0; i < numberOfBalls; i++) {
+// Create a ball with random position and speed.
+// You can change the radius
+var ball =  new Ball(w*Math.random(),
+h*Math.random(),
+(2*Math.PI)*Math.random(),
+50,
+30);
 
-    if(!circleCollide(ball.x, ball.y, ball.radius,
-      monster.x, monster.y, monster.boundingCircleRadius)) {
-        // On la rajoute au tableau
-        ballArray[i] = ball;
-      } else {
-        i--;
-      }
+if(!circleCollide(ball.x, ball.y, ball.radius,
+monster.x, monster.y, monster.boundingCircleRadius)) {
+// On la rajoute au tableau
+ballArray[i] = ball;
+} else {
+i--;
+}
+}
+}*/
+// constructor function for balls
+/*function Ball(x, y, angle, v, diameter, color) {
+this.x = x;
+this.y = y;
+this.angle = angle;
+this.v = v;
+this.radius = diameter/2;
+this.color = color;
+this.dead = false;
+
+this.draw = function() {
+// si la balle est "morte" on ne fait rien
+if(this.dead) return;
+
+ctx.save();
+ctx.beginPath();
+ctx.fillStyle = this.color;
+ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
+ctx.fill();
+ctx.restore();
+this.color = 'black';
+};
+
+this.move = function() {
+// si la balle est "morte" on ne fait rien
+if(this.dead) return;
+
+// add horizontal increment to the x pos
+// add vertical increment to the y pos
+
+var incX = this.v * Math.cos(this.angle);
+var incY = this.v * Math.sin(this.angle);
+
+this.x += calcDistanceToMove(delta, incX);
+this.y += calcDistanceToMove(delta, incY);
+};
+}*/
+
+var start = function(){
+  // adds a div for displaying the fps value
+  fpsContainer = document.createElement('div');
+  document.body.appendChild(fpsContainer);
+
+  // Canvas, context etc.
+  canvas = document.querySelector("#myCanvas");
+
+  // often useful
+  w = canvas.width;
+  h = canvas.height;
+
+  // important, we will draw with this object
+  ctx = canvas.getContext('2d');
+  // default police for text
+  ctx.font="20px Arial";
+
+  //add the listener to the main, window object, and update the states
+  window.addEventListener('keydown', function(event){
+    if (event.keyCode === 37) {
+      inputStates.left = true;
+    } else if (event.keyCode === 38) {
+      inputStates.up = true;
+    } else if (event.keyCode === 39) {
+      inputStates.right = true;
+    } else if (event.keyCode === 40) {
+      inputStates.down = true;
+    }  else if (event.keyCode === 32) {
+      inputStates.space = true;
     }
-  }
-  // constructor function for balls
-  function Ball(x, y, angle, v, diameter, color) {
-    this.x = x;
-    this.y = y;
-    this.angle = angle;
-    this.v = v;
-    this.radius = diameter/2;
-    this.color = color;
-    this.dead = false;
+  }, false);
 
-    this.draw = function() {
-      // si la balle est "morte" on ne fait rien
-      if(this.dead) return;
+  //if the key will be released, change the states object
+  window.addEventListener('keyup', function(event){
+    if (event.keyCode === 37) {
+      inputStates.left = false;
+    } else if (event.keyCode === 38) {
+      inputStates.up = false;
+    } else if (event.keyCode === 39) {
+      inputStates.right = false;
+    } else if (event.keyCode === 40) {
+      inputStates.down = false;
+    } else if (event.keyCode === 32) {
+      inputStates.space = false;
+    }
+  }, false);
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.fillStyle = this.color;
-      ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
-      ctx.fill();
-      ctx.restore();
-      this.color = 'black';
-    };
+  // Mouse event listeners
+  canvas.addEventListener('mousemove', function (evt) {
+    inputStates.mousePos = getMousePos(evt);
+  }, false);
 
-    this.move = function() {
-      // si la balle est "morte" on ne fait rien
-      if(this.dead) return;
+  canvas.addEventListener('mousedown', function (evt) {
+    inputStates.mousedown = true;
+    inputStates.mouseButton = evt.button;
+  }, false);
 
-      // add horizontal increment to the x pos
-      // add vertical increment to the y pos
+  canvas.addEventListener('mouseup', function (evt) {
+    inputStates.mousedown = false;
+  }, false);
 
-      var incX = this.v * Math.cos(this.angle);
-      var incY = this.v * Math.sin(this.angle);
+  // We create tge balls: try to change the parameter
+  //createBalls(4);
 
-      this.x += calcDistanceToMove(delta, incX);
-      this.y += calcDistanceToMove(delta, incY);
-    };
-  }
+  // start the animation
+  requestAnimationFrame(mainLoop);
+};
 
-
-  var start = function(){
-    // adds a div for displaying the fps value
-    fpsContainer = document.createElement('div');
-    document.body.appendChild(fpsContainer);
-
-    // Canvas, context etc.
-    canvas = document.querySelector("#myCanvas");
-
-    // often useful
-    w = canvas.width;
-    h = canvas.height;
-
-    // important, we will draw with this object
-    ctx = canvas.getContext('2d');
-    // default police for text
-    ctx.font="20px Arial";
-
-    //add the listener to the main, window object, and update the states
-    window.addEventListener('keydown', function(event){
-      if (event.keyCode === 37) {
-        inputStates.left = true;
-      } else if (event.keyCode === 38) {
-        inputStates.up = true;
-      } else if (event.keyCode === 39) {
-        inputStates.right = true;
-      } else if (event.keyCode === 40) {
-        inputStates.down = true;
-      }  else if (event.keyCode === 32) {
-        inputStates.space = true;
-      }
-    }, false);
-
-    //if the key will be released, change the states object
-    window.addEventListener('keyup', function(event){
-      if (event.keyCode === 37) {
-        inputStates.left = false;
-      } else if (event.keyCode === 38) {
-        inputStates.up = false;
-      } else if (event.keyCode === 39) {
-        inputStates.right = false;
-      } else if (event.keyCode === 40) {
-        inputStates.down = false;
-      } else if (event.keyCode === 32) {
-        inputStates.space = false;
-      }
-    }, false);
-
-    // Mouse event listeners
-    canvas.addEventListener('mousemove', function (evt) {
-      inputStates.mousePos = getMousePos(evt);
-    }, false);
-
-    canvas.addEventListener('mousedown', function (evt) {
-      inputStates.mousedown = true;
-      inputStates.mouseButton = evt.button;
-    }, false);
-
-    canvas.addEventListener('mouseup', function (evt) {
-      inputStates.mousedown = false;
-    }, false);
-
-    // We create tge balls: try to change the parameter
-    createBalls(4);
-
-    // start the animation
-    requestAnimationFrame(mainLoop);
-  };
-
-  //our GameFramework returns a public API visible from outside its scope
-  return {
-    start: start
-  };
+//our GameFramework returns a public API visible from outside its scope
+return {
+  start: start
+};
 };
