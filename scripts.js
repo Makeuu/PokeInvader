@@ -13,6 +13,7 @@ var etat_personnage = {
 function ObjetGraphique(x1, y1, w1, h1) {
   var x=x1, y=y1, w=w1, h=h1;
   var speed = 1;
+  var etat = etat_personnage.enVie;
   function draw(ctx) {
     ctx.fillRect(x, y, w, h);
   }
@@ -24,6 +25,7 @@ function ObjetGraphique(x1, y1, w1, h1) {
   function setX(x1) {
     x = x1;
   }
+
   function getY() {
     return y;
   }
@@ -34,13 +36,21 @@ function ObjetGraphique(x1, y1, w1, h1) {
   function getW() {
     return w;
   }
+  function getH() {
+    return h;
+  }
   function getSpeed(){
     return speed;
   }
   function setSpeed(s1){
     speed = s1;
   }
-
+  function getEtat(){
+    return etat;
+  }
+  function setEtat(e){
+    etat = e;
+  }
   return {
     draw:draw,
     getSpeed:getSpeed,
@@ -49,14 +59,16 @@ function ObjetGraphique(x1, y1, w1, h1) {
     getY: getY,
     setX: setX,
     setY:setY,
-    getW:getW
+    getW:getW,
+    getH:getH,
+    getEtat:getEtat,
+    setEtat:setEtat
   }
 }
 
 function Vaisseau(x, y, w, h, v){
   var api = new ObjetGraphique(x, y, w, h);
   var vie = v;
-  var etat = etat_personnage.enVie;
   // redéfinition
   var superDraw = api.draw;
 
@@ -72,10 +84,8 @@ function Vaisseau(x, y, w, h, v){
 
 function Monstre(x, y, w, h, e){
   var api = new ObjetGraphique(x, y, w, h);
-  var etat = etat_personnage.enVie;
   // redéfinition
   var superDraw = api.draw;
-
 
   api.draw = function(ctx) {
     //console.log('draw redéfini dans Monstre');
@@ -86,6 +96,22 @@ function Monstre(x, y, w, h, e){
   }
   return api;
 }
+
+function Missile(x, y, w, h, e){
+  var api = new ObjetGraphique(x, y, w, h);
+  // redéfinition
+  var superDraw = api.draw;
+
+  api.draw = function(ctx) {
+    //console.log('draw redéfini dans Monstre');
+    ctx.fillStyle = 'yellow';
+    // appel de la méthode de la pseudo classe mère que l'on
+    // a redéfini
+    superDraw.call(this, ctx);
+  }
+  return api;
+}
+
 
 // GAME FRAMEWORK STARTS HERE
 var GF = function(){
@@ -112,14 +138,6 @@ var GF = function(){
   // vars for handling inputs
   var inputStates = {};
 
-  // The monster !
-  var monster = {
-    x:200,
-    y:200,
-    speed:100, // pixels/s this time !
-    boundingCircleRadius: 70
-  };
-
   var objetsGraphiques = [];
   var objetsMonstres = [];
   for(var i=1; i<=5; i++){
@@ -134,7 +152,7 @@ var GF = function(){
   objetsVaisseaux.push(vaisseau);
 
   // array of balls to animate
-  var ballArray = [];
+  var objetsMissiles = [];
 
   // We want the rectangle to move at speed pixels/s (there are 60 frames in a second)
   // If we are really running at 60 frames/s, the delay between frames should be 1/60
@@ -183,10 +201,6 @@ var GF = function(){
     // Clear the canvas
     clearCanvas();
 
-    if(monster.dead) {
-      etatCourant = etats.gameOver;
-    }
-
     switch(etatCourant) {
       case etats.jeuEnCours:
       //main function, called each frame
@@ -197,7 +211,9 @@ var GF = function(){
 
       objetsMonstres.forEach(function f(elem) {
         //Dessiner
-        elem.draw(ctx);
+        if(elem.getEtat() == etat_personnage.enVie){
+          elem.draw(ctx);
+        }
         updateMonster(delta, elem);
         //Update les positions
         //Test des collisions
@@ -207,6 +223,15 @@ var GF = function(){
         elem.draw(ctx);
         //Update les positions
         updateVaisseauPosition(delta, elem);
+        if(inputStates.space && (objetsMissiles.length < 1)) {
+          var m = new Missile(elem.getX(), elem.getY(), 10, 10);
+          objetsMissiles.push(m);
+        }
+      });
+      objetsMissiles.forEach(function f(elem) {
+        //Dessiner
+        elem.draw(ctx);
+        updateMissiles(delta, elem);
         //Test des collisions
       });
       break;
@@ -247,26 +272,23 @@ var GF = function(){
 }
 
 function updateMonster(delta, elem) {
-  // for each ball in the array
-
   // 1) move the ball
   elem.setX(elem.getX() + 2*elem.getSpeed() );
-  //console.log(elem.getSpeed());
 
   // 2) test if the ball collides with a wall
   testCollisionWithWalls(elem);
 
-  //Collision avec missiles
+  // 3 test avec missiles
+  if(objetsMissiles.length > 0){
+    testCollisionWithMonstre(objetsMissiles[0], elem);
+  }
+}
 
-  /*if(circRectsOverlap(monster.x-50, monster.y-50, 100, 100, ball.x, ball.y, ball.radius)) {
+function updateMissiles(delta, elem) {
 
-  //console.log("collision");
-  ball.color = 'red';
-  monster.dead = true;
-}*/
+  elem.setY(elem.getY() - 10 );
 
-// 3) draw the ball
-//monstre.draw(ctx);
+  testCollisionWithWalls(elem);
 }
 
 // Teste collisions entre cercles
@@ -277,12 +299,19 @@ function circleCollide(x1, y1, r1, x2, y2, r2) {
 }
 // Collisions between rectangle
 function rectsOverlap(x0, y0, w0, h0, x2, y2, w2, h2) {
-  if ((x0 > (x2 + w2)) || ((x0 + w0) < x2))
+  /*if ((x0 > (x2 + w2)) || ((x0 + w0) < x2))
   return false;
 
   if ((y0 > (y2 + h2)) || ((y0 + h0) < y2))
-  //return false;
-  return true;
+  return false;
+  return true;*/
+  maxgauche=Math.max(x0,x2)
+  mindroit=Math.min(x0+w0,x2+w2)
+  maxbas=Math.max(y0,y2)
+  minhaut=Math.min(y0+h0,y2+h2)
+  if(maxgauche < mindroit && maxbas < minhaut){
+    return true;
+  }
 }
 
 // Collisions between rectangle and circle
@@ -298,16 +327,30 @@ if (testY > (y0+h0)) testY=(y0+h0);
 return (((cx-testX)*(cx-testX)+(cy-testY)*(cy-testY))<r*r);
 }*/
 
-function testCollisionWithWalls(monstre) {
+function testCollisionWithWalls(elem) {
   // left
-  if (monstre.getX() < (monstre.getW()*-1) ) {
-    monstre.setSpeed(1);
-    monstre.setY(monstre.getY()+10);
+  if (elem.getX() < (elem.getW()*-1) ) {
+    elem.setSpeed(1);
+    elem.setY(elem.getY()+10);
   }
   // right
-  if (monstre.getX() > canvas.width ) {
-    monstre.setSpeed(-1);
-    monstre.setY(monstre.getY()+10);
+  if (elem.getX() > canvas.width ) {
+    elem.setSpeed(-1);
+    elem.setY(elem.getY()+10);
+  }
+  // haut
+  if (elem.getY() < 0 ) {
+    objetsMissiles = [];
+    console.log('loupé');
+  }
+}
+
+function testCollisionWithMonstre(elem, monster){
+  if(rectsOverlap(elem.getX(), elem.getY(), elem.getW(), elem.getH(), monster.getX(), monster.getY(), monster.getW(), monster.getH())){
+    monster.setEtat(etat_personnage.detruit);
+    //objetsMissiles = [];
+    elem.setEtat(etat_personnage.detruit);
+    console.log('SHOOT');
   }
 }
 
