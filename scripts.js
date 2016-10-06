@@ -4,32 +4,48 @@ window.onload = function init() {
   game.start();
 };
 
+var pikachu = new Image();
+var URL_PIKACHU = 'pikachu.png';
+pikachu.src = URL_PIKACHU;
+
+var pokemon = new Image();
+var URL_POKEMON = 'pokemon.png';
+pokemon.src = URL_POKEMON;
+
+var currentFrame = 0;  // the current frame to draw
+var counter = 0;       // keep track of frame rate
 //Definition des objets
 var etat_personnage = {
   enVie : 0,
   detruit : 1,
 };
 
-function ObjetGraphique(x1, y1, w1, h1) {
+//Definition des objets
+var mvt_pikachu = [134, 170 ,207,248];
+
+
+function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   var x=x1, y=y1, w=w1, h=h1;
+  var ximg=x2, yimg=y2, wimg=w2, himg=w2;
+  var sprite = img;
   var speed = 1;
   var etat = etat_personnage.enVie;
-  function draw(ctx) {
-    ctx.fillRect(x, y, w, h);
-  }
+  var mvt=0;
 
+  function draw(ctx) {
+    //ctx.fillRect(x, y, w, h);
+    //ctx.drawImage(sprite, 136, 157, 40, 30, x, y, w, h);
+    ctx.drawImage(sprite, ximg, yimg, wimg, himg, x, y, w, h);
+  }
   function getX() {
     return x;
   }
-
   function setX(x1) {
     x = x1;
   }
-
   function getY() {
     return y;
   }
-
   function setY(y1) {
     y = y1;
   }
@@ -51,6 +67,24 @@ function ObjetGraphique(x1, y1, w1, h1) {
   function setEtat(e){
     etat = e;
   }
+  function getX2() {
+    return ximg;
+  }
+  function setX2() {
+    // code removed for brevity
+    // Update the animation
+    // update to the next frame if it is time
+    if (counter == (4 - 1)){
+      ximg = mvt_pikachu [mvt];
+      mvt++;
+      if(mvt > 3){
+        mvt = 0;
+      }
+    }
+    // update the counter
+    counter = (counter + 1) % 4;
+  }
+
   return {
     draw:draw,
     getSpeed:getSpeed,
@@ -62,19 +96,20 @@ function ObjetGraphique(x1, y1, w1, h1) {
     getW:getW,
     getH:getH,
     getEtat:getEtat,
-    setEtat:setEtat
+    setEtat:setEtat,
+    getX2:getX2,
+    setX2:setX2
   }
 }
 
-function Vaisseau(x, y, w, h, v){
-  var api = new ObjetGraphique(x, y, w, h);
-  var vie = v;
+function Vaisseau(x, y, w, h, x2, y2, w2, h2, pikachu){
+  var api = new ObjetGraphique(x, y, w, h, x2, y2, w2, h2, pikachu);
   // redéfinition
   var superDraw = api.draw;
 
   api.draw = function(ctx) {
     //console.log('draw redéfini dans Vaisseau');
-    ctx.fillStyle = 'red';
+    //ctx.fillStyle = 'red';
     // appel de la méthode de la pseudo classe mère que l'on
     // a redéfini
     superDraw.call(this, ctx);
@@ -82,14 +117,14 @@ function Vaisseau(x, y, w, h, v){
   return api;
 }
 
-function Monstre(x, y, w, h, e){
-  var api = new ObjetGraphique(x, y, w, h);
+function Monstre(x, y, w, h, x2, y2, w2, h2, pokemon){
+  var api = new ObjetGraphique(x, y, w, h, x2, y2, w2, h2, pokemon);
   // redéfinition
   var superDraw = api.draw;
 
   api.draw = function(ctx) {
     //console.log('draw redéfini dans Monstre');
-    ctx.fillStyle = 'green';
+    //ctx.fillStyle = 'green';
     // appel de la méthode de la pseudo classe mère que l'on
     // a redéfini
     superDraw.call(this, ctx);
@@ -97,14 +132,14 @@ function Monstre(x, y, w, h, e){
   return api;
 }
 
-function Missile(x, y, w, h, e){
-  var api = new ObjetGraphique(x, y, w, h);
+function Missile(x, y, w, h, x2, y2, w2, h2,pikachu){
+  var api = new ObjetGraphique(x, y, w, h, x2, y2, w2, h2,pikachu);
   // redéfinition
   var superDraw = api.draw;
 
   api.draw = function(ctx) {
     //console.log('draw redéfini dans Monstre');
-    ctx.fillStyle = 'yellow';
+    //ctx.fillStyle = 'blue';
     // appel de la méthode de la pseudo classe mère que l'on
     // a redéfini
     superDraw.call(this, ctx);
@@ -142,13 +177,13 @@ var GF = function(){
   var objetsMonstres = [];
   for(var i=1; i<=5; i++){
     for (var j=1; j<=10; j++){
-      var monstre = new Monstre(j*50, i*50, 30, 30);
+      var monstre = new Monstre(j*64, i*64, 64, 64, 319, 133, 64, 64, pokemon);
       objetsMonstres.push(monstre);
     }
   }
 
   var objetsVaisseaux = [];
-  var vaisseau = new Vaisseau(600, 500, 60, 30);
+  var vaisseau = new Vaisseau(600, 500, 80, 66, 135, 156, 40, 32, pikachu);
   objetsVaisseaux.push(vaisseau);
 
   // array of balls to animate
@@ -209,12 +244,12 @@ var GF = function(){
       // number of ms since last frame draw
       delta = timer(time);
 
-      objetsMonstres.forEach(function f(elem) {
+      objetsMonstres.forEach(function f(elem, index) {
         //Dessiner
         if(elem.getEtat() == etat_personnage.enVie){
           elem.draw(ctx);
         }
-        updateMonster(delta, elem);
+        updateMonstre(delta, elem, index);
         //Update les positions
         //Test des collisions
       });
@@ -224,7 +259,7 @@ var GF = function(){
         //Update les positions
         updateVaisseauPosition(delta, elem);
         if(inputStates.space && (objetsMissiles.length < 1)) {
-          var m = new Missile(elem.getX(), elem.getY(), 10, 10);
+          var m = new Missile(elem.getX(), elem.getY(), 10, 10, 136, 157, 10, 10, pikachu);
           objetsMissiles.push(m);
         }
       });
@@ -256,13 +291,16 @@ var GF = function(){
     elem.speedX = elem.speedY = 0;
     // check inputStates
     if (inputStates.left) {
+      ctx.scale(-1,1);
       elem.speedX = -elem.speed;
+      elem.setX2();
     }
     /*if (inputStates.up) {
     elem.speedY = -elem.speed;
   }*/
   if (inputStates.right) {
     elem.speedX = elem.speed;
+    elem.setX2();
   }
   elem.speed = 100;
   // COmpute the incX and inY in pixels depending
@@ -271,7 +309,7 @@ var GF = function(){
   elem.setY(elem.getY() + calcDistanceToMove(delta, elem.speedY));
 }
 
-function updateMonster(delta, elem) {
+function updateMonstre(delta, elem, index) {
   // 1) move the ball
   elem.setX(elem.getX() + 2*elem.getSpeed() );
 
@@ -280,7 +318,7 @@ function updateMonster(delta, elem) {
 
   // 3 test avec missiles
   if(objetsMissiles.length > 0){
-    testCollisionWithMonstre(objetsMissiles[0], elem);
+    testCollisionAvecMonstre(objetsMissiles[0], elem, index);
   }
 }
 
@@ -345,10 +383,11 @@ function testCollisionWithWalls(elem) {
   }
 }
 
-function testCollisionWithMonstre(elem, monster){
+function testCollisionAvecMonstre(elem, monster, index){
   if(rectsOverlap(elem.getX(), elem.getY(), elem.getW(), elem.getH(), monster.getX(), monster.getY(), monster.getW(), monster.getH())){
     monster.setEtat(etat_personnage.detruit);
-    //objetsMissiles = [];
+    objetsMonstres.splice(index,1);
+    objetsMissiles.splice(0,1);
     elem.setEtat(etat_personnage.detruit);
     console.log('SHOOT');
   }
@@ -362,63 +401,6 @@ function getMousePos(evt) {
     y: evt.clientY - rect.top
   };
 }
-
-/*function createBalls(numberOfBalls) {
-for(var i=0; i < numberOfBalls; i++) {
-// Create a ball with random position and speed.
-// You can change the radius
-var ball =  new Ball(w*Math.random(),
-h*Math.random(),
-(2*Math.PI)*Math.random(),
-50,
-30);
-
-if(!circleCollide(ball.x, ball.y, ball.radius,
-monster.x, monster.y, monster.boundingCircleRadius)) {
-// On la rajoute au tableau
-ballArray[i] = ball;
-} else {
-i--;
-}
-}
-}*/
-// constructor function for balls
-/*function Ball(x, y, angle, v, diameter, color) {
-this.x = x;
-this.y = y;
-this.angle = angle;
-this.v = v;
-this.radius = diameter/2;
-this.color = color;
-this.dead = false;
-
-this.draw = function() {
-// si la balle est "morte" on ne fait rien
-if(this.dead) return;
-
-ctx.save();
-ctx.beginPath();
-ctx.fillStyle = this.color;
-ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
-ctx.fill();
-ctx.restore();
-this.color = 'black';
-};
-
-this.move = function() {
-// si la balle est "morte" on ne fait rien
-if(this.dead) return;
-
-// add horizontal increment to the x pos
-// add vertical increment to the y pos
-
-var incX = this.v * Math.cos(this.angle);
-var incY = this.v * Math.sin(this.angle);
-
-this.x += calcDistanceToMove(delta, incX);
-this.y += calcDistanceToMove(delta, incY);
-};
-}*/
 
 var start = function(){
   // adds a div for displaying the fps value
