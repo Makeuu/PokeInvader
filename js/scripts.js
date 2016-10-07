@@ -3,17 +3,22 @@ window.onload = function init() {
   var game = new GF();
   game.start();
 };
+/* test tom*/
+
 
 var pikachu = new Image();
-var URL_PIKACHU = 'pikachu.png';
+//var URL_PIKACHU = './pictures/pikachu.png';
+var URL_PIKACHU = './pictures/pika_mouvement.png';
 pikachu.src = URL_PIKACHU;
 
 var pokemon = new Image();
-var URL_POKEMON = 'pokemon.png';
+var URL_POKEMON = './pictures/pokemon.png';
 pokemon.src = URL_POKEMON;
 
 var currentFrame = 0;  // the current frame to draw
 var counter = 0;       // keep track of frame rate
+var counterY=0;
+var deplacement=0;
 //Definition des objets
 var etat_personnage = {
   enVie : 0,
@@ -21,7 +26,8 @@ var etat_personnage = {
 };
 
 //Definition des objets
-var mvt_pikachu = [134, 170 ,207,248];
+//var mvt_pikachu = [134, 170 ,207,248];
+var mvt_pikachu = [75, 115 ,150,188];
 
 
 function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
@@ -35,6 +41,8 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   function draw(ctx) {
     //ctx.fillRect(x, y, w, h);
     //ctx.drawImage(sprite, 136, 157, 40, 30, x, y, w, h);
+
+
     ctx.drawImage(sprite, ximg, yimg, wimg, himg, x, y, w, h);
   }
   function getX() {
@@ -74,15 +82,59 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     // code removed for brevity
     // Update the animation
     // update to the next frame if it is time
+    /*
+      if (counter == (4 - 1)){
+        ximg = mvt_pikachu [mvt];
+        mvt++;
+        if(mvt > 3){
+          mvt = 0;
+        }
+      }
+      // update the counter
+      counter = (counter + 1) % 4;
+*/
     if (counter == (4 - 1)){
       ximg = mvt_pikachu [mvt];
-      mvt++;
-      if(mvt > 3){
-        mvt = 0;
+      if (yimg == 133){
+        //droite
+        mvt++;
+        if(mvt > 3){
+          mvt = 0;
+        }
+
       }
+      else{
+        //gauche
+        mvt--;
+        if(mvt < 0){
+          mvt = 3;
+        }
+      }
+
     }
     // update the counter
     counter = (counter + 1) % 4;
+  }
+
+  function setY2() {
+    if (counterY == (4 - 1)){
+      // gérer le reverse
+      console.log("y : "+yimg);
+      if (deplacement == 1){
+        //droite
+        yimg = 97;
+        console.log("droite");
+
+      }
+      else{
+        //gauche
+        yimg = 133;
+        console.log("gauche");
+
+      }
+    }
+    // update the counter
+    counterY = (counterY + 1) % 4;
   }
 
   return {
@@ -98,7 +150,8 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     getEtat:getEtat,
     setEtat:setEtat,
     getX2:getX2,
-    setX2:setX2
+    setX2:setX2,
+    setY2:setY2
   }
 }
 
@@ -183,7 +236,9 @@ var GF = function(){
   }
 
   var objetsVaisseaux = [];
-  var vaisseau = new Vaisseau(600, 500, 80, 66, 135, 156, 40, 32, pikachu);
+  //var vaisseau = new Vaisseau(600, 500, 80, 66, 135, 156, 40, 32, pikachu);
+  var vaisseau = new Vaisseau(600, 500, 80, 66, 75, 133, 35.5, 32, pikachu);
+
   objetsVaisseaux.push(vaisseau);
 
   // array of balls to animate
@@ -293,6 +348,9 @@ var GF = function(){
     if (inputStates.left) {
       ctx.scale(-1,1);
       elem.speedX = -elem.speed;
+
+      deplacement=1;
+      elem.setY2();
       elem.setX2();
     }
     /*if (inputStates.up) {
@@ -300,6 +358,10 @@ var GF = function(){
   }*/
   if (inputStates.right) {
     elem.speedX = elem.speed;
+
+
+    deplacement=0;
+    elem.setY2();
     elem.setX2();
   }
   elem.speed = 100;
