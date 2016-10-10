@@ -82,17 +82,7 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     // code removed for brevity
     // Update the animation
     // update to the next frame if it is time
-    /*
-      if (counter == (4 - 1)){
-        ximg = mvt_pikachu [mvt];
-        mvt++;
-        if(mvt > 3){
-          mvt = 0;
-        }
-      }
-      // update the counter
-      counter = (counter + 1) % 4;
-*/
+
     if (counter == (4 - 1)){
       ximg = mvt_pikachu [mvt];
       if (yimg == 133){
@@ -119,22 +109,27 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   function setY2() {
     if (counterY == (4 - 1)){
       // gérer le reverse
-      console.log("y : "+yimg);
       if (deplacement == 1){
         //droite
         yimg = 97;
-        console.log("droite");
-
       }
       else{
         //gauche
         yimg = 133;
-        console.log("gauche");
-
       }
     }
     // update the counter
     counterY = (counterY + 1) % 4;
+  }
+
+  function attentePika(){
+    if(deplacement){
+      ximg = 205;
+      yimg = 172;
+    }else {
+      ximg = 170;
+      yimg = 172;
+    }
   }
 
   return {
@@ -151,7 +146,8 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     setEtat:setEtat,
     getX2:getX2,
     setX2:setX2,
-    setY2:setY2
+    setY2:setY2,
+    attentePika:attentePika
   }
 }
 
@@ -314,7 +310,11 @@ var GF = function(){
         //Update les positions
         updateVaisseauPosition(delta, elem);
         if(inputStates.space && (objetsMissiles.length < 1)) {
-          var m = new Missile(elem.getX(), elem.getY(), 10, 10, 136, 157, 10, 10, pikachu);
+          // TOM attaque
+
+          var m = new Missile(elem.getX() + 20, elem.getY()-66, 23, 50, 73, 215, 23, 35, pikachu); // 66-> taille de pika
+
+        //  var m = new Missile(elem.getX(), elem.getY(), 10, 10, 136, 157, 10, 10, pikachu);
           objetsMissiles.push(m);
         }
       });
@@ -346,7 +346,7 @@ var GF = function(){
     elem.speedX = elem.speedY = 0;
     // check inputStates
     if (inputStates.left) {
-      ctx.scale(-1,1);
+      //ctx.scale(-1,1);
       elem.speedX = -elem.speed;
 
       deplacement=1;
@@ -356,14 +356,17 @@ var GF = function(){
     /*if (inputStates.up) {
     elem.speedY = -elem.speed;
   }*/
-  if (inputStates.right) {
+  else if (inputStates.right) {
     elem.speedX = elem.speed;
 
 
     deplacement=0;
     elem.setY2();
     elem.setX2();
+  }else{
+    elem.attentePika();
   }
+
   elem.speed = 100;
   // COmpute the incX and inY in pixels depending
   // on the time elasped since last redraw
@@ -432,11 +435,14 @@ function testCollisionWithWalls(elem) {
   if (elem.getX() < (elem.getW()*-1) ) {
     elem.setSpeed(1);
     elem.setY(elem.getY()+10);
+
   }
   // right
   if (elem.getX() > canvas.width ) {
     elem.setSpeed(-1);
     elem.setY(elem.getY()+10);
+
+
   }
   // haut
   if (elem.getY() < 0 ) {
