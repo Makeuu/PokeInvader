@@ -28,6 +28,7 @@ var etat_personnage = {
 //Definition des objets
 //var mvt_pikachu = [134, 170 ,207,248];
 var mvt_pikachu = [75, 115 ,150,188];
+var mvt_attaque = [78,114,150]
 
 
 function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
@@ -37,6 +38,7 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   var speed = 1;
   var etat = etat_personnage.enVie;
   var mvt=0;
+  var mvt_a=0;
 
   function draw(ctx) {
     //ctx.fillRect(x, y, w, h);
@@ -110,11 +112,11 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     if (counterY == (4 - 1)){
       // gérer le reverse
       if (deplacement == 1){
-        //droite
+        //gauche
         yimg = 97;
       }
       else{
-        //gauche
+        //droite
         yimg = 133;
       }
     }
@@ -123,13 +125,44 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   }
 
   function attentePika(){
+    console.log(deplacement);
     if(deplacement){
-      ximg = 205;
-      yimg = 172;
+      //gauche
+      ximg = 160;
+      yimg = 241;
     }else {
-      ximg = 170;
-      yimg = 172;
+      //droite
+      ximg = 117;
+      yimg = 241;
     }
+  }
+
+  function attaquePika(){
+
+
+    if (counter == (3 - 1)){
+      ximg = mvt_attaque [mvt_a];
+      if (deplacement == 1){
+        //droite
+        yimg = 205;
+        mvt_a++;
+        if(mvt_a > 2){
+          mvt_a = 0;
+        }
+
+      }
+      else{
+        //gauche
+        yimg=172;
+        mvt_a--;
+        if(mvt_a < 0){
+          mvt_a = 2;
+        }
+      }
+
+    }
+    // update the counter
+    counter = (counter + 1) % 3;
   }
 
   return {
@@ -147,7 +180,8 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     getX2:getX2,
     setX2:setX2,
     setY2:setY2,
-    attentePika:attentePika
+    attentePika:attentePika,
+    attaquePika:attaquePika
   }
 }
 
@@ -312,7 +346,7 @@ var GF = function(){
         if(inputStates.space && (objetsMissiles.length < 1)) {
           // TOM attaque
 
-          var m = new Missile(elem.getX() + 20, elem.getY()-66, 23, 50, 73, 215, 23, 35, pikachu); // 66-> taille de pika
+          var m = new Missile(elem.getX() + 20, elem.getY()-66, 23, 50, 73, 241, 23, 35, pikachu); // 66-> taille de pika
 
         //  var m = new Missile(elem.getX(), elem.getY(), 10, 10, 136, 157, 10, 10, pikachu);
           objetsMissiles.push(m);
@@ -363,6 +397,8 @@ var GF = function(){
     deplacement=0;
     elem.setY2();
     elem.setX2();
+  }else if (inputStates.space){
+    elem.attaquePika();
   }else{
     elem.attentePika();
   }
@@ -499,6 +535,10 @@ var start = function(){
       inputStates.down = true;
     }  else if (event.keyCode === 32) {
       inputStates.space = true;
+
+      // On l'empêche de bouger
+      inputStates.left=false;
+      inputStates.right=false;
     }
   }, false);
 
