@@ -125,7 +125,7 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   }
 
   function attentePika(){
-    console.log(deplacement);
+
     if(deplacement){
       //gauche
       ximg = 160;
@@ -241,6 +241,7 @@ var GF = function(){
     menuPrincipal : 0,
     jeuEnCours : 1,
     gameOver : 2,
+    win : 3
   };
 
   var etatCourant = etats.jeuEnCours;
@@ -258,10 +259,13 @@ var GF = function(){
 
   var objetsGraphiques = [];
   var objetsMonstres = [];
-  for(var i=1; i<=5; i++){
-    for (var j=1; j<=10; j++){
-      var monstre = new Monstre(j*64, i*64, 64, 64, 319, 133, 64, 64, pokemon);
-      objetsMonstres.push(monstre);
+
+  var generateMonster = function(){
+    for(var i=1; i<=5; i++){
+      for (var j=1; j<=10; j++){
+        var monstre = new Monstre(j*64, i*64, 64, 64, 319, 133, 64, 64, pokemon);
+        objetsMonstres.push(monstre);
+      }
     }
   }
 
@@ -329,15 +333,26 @@ var GF = function(){
       // number of ms since last frame draw
       delta = timer(time);
 
-      objetsMonstres.forEach(function f(elem, index) {
-        //Dessiner
-        if(elem.getEtat() == etat_personnage.enVie){
-          elem.draw(ctx);
-        }
-        updateMonstre(delta, elem, index);
-        //Update les positions
-        //Test des collisions
-      });
+      // Test s'il reste des monstres
+      if(objetsMonstres.length){
+        // s'il en reste on les fait bouger
+
+        objetsMonstres.forEach(function f(elem, index) {
+          //Dessiner
+          if(elem.getEtat() == etat_personnage.enVie){
+            elem.draw(ctx);
+          }
+          updateMonstre(delta, elem, index);
+          //Update les positions
+          //Test des collisions
+        });
+      }
+      else {
+        // sinon fin de partie
+        console.log("win");
+        etatCourant=etats.win;
+      }
+
       objetsVaisseaux.forEach(function f(elem) {
         //Dessiner
         elem.draw(ctx);
@@ -367,6 +382,18 @@ var GF = function(){
       if(inputStates.space) {
         //console.log("space enfoncee");
         createBalls(4);
+        etatCourant = etats.jeuEnCours;
+      }
+      break;
+
+      case etats.win:
+      //console.log("GAME OVER");
+      ctx.fillText("YOU WIN", 100, 100);
+      ctx.fillText("Press SPACE to start again", 100, 150);
+
+      if(inputStates.space) {
+        //console.log("space enfoncee");
+        generateMonster();
         etatCourant = etats.jeuEnCours;
       }
       break;
@@ -411,6 +438,7 @@ var GF = function(){
 }
 
 function updateMonstre(delta, elem, index) {
+
   // 1) move the ball
   elem.setX(elem.getX() + 2*elem.getSpeed() );
 
@@ -522,6 +550,9 @@ var start = function(){
   ctx = canvas.getContext('2d');
   // default police for text
   ctx.font="20px Arial";
+
+  //on génère les monstres
+  generateMonster();
 
   //add the listener to the main, window object, and update the states
   window.addEventListener('keydown', function(event){
