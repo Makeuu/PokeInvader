@@ -1,3 +1,11 @@
+////////////////////////
+//       Ne           //
+//       Pas          //
+//       Toucher      //
+//       Reprise      //
+////////////////////////
+
+
 // Inits
 window.onload = function init() {
   var game = new GF();
@@ -44,10 +52,6 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   var mvt_a=0;
 
   function draw(ctx) {
-    //ctx.fillRect(x, y, w, h);
-    //ctx.drawImage(sprite, 136, 157, 40, 30, x, y, w, h);
-
-
     ctx.drawImage(sprite, ximg, yimg, wimg, himg, x, y, w, h);
   }
   function getX() {
@@ -313,6 +317,7 @@ var GF = function(){
     frameCount++;
   };
 
+
   // clears the canvas content
   function clearCanvas() {
     ctx.clearRect(0, 0, w, h);
@@ -322,18 +327,18 @@ var GF = function(){
   var measureScore = function(){
 
 
-      //vitesse du monster
-     scoreContainer.innerHTML = 'Score: ' + score;
+    //vitesse du monster
+    scoreContainer.innerHTML = 'Score: ' + score;
   };
 
   var curentTime = function(delta){
 
-      tempsTotal += delta;
-      //  ctx.fillText((tempsTotal/1000).toFixed(2) , 100, 100);
-      var cTime= (tempsTotal/1000).toFixed(0);
-      timeContainer.innerHTML = 'Time : '+cTime;
+    tempsTotal += delta;
+    //  ctx.fillText((tempsTotal/1000).toFixed(2) , 100, 100);
+    var cTime= (tempsTotal/1000).toFixed(0);
+    timeContainer.innerHTML = 'Time : '+cTime;
 
-      return cTime;
+    return cTime;
   };
 
 
@@ -398,7 +403,7 @@ var GF = function(){
 
           var m = new Missile(elem.getX() + 20, elem.getY()-66, 23, 50, 73, 241, 23, 35, pikachu); // 66-> taille de pika
 
-        //  var m = new Missile(elem.getX(), elem.getY(), 10, 10, 136, 157, 10, 10, pikachu);
+          //  var m = new Missile(elem.getX(), elem.getY(), 10, 10, 136, 157, 10, 10, pikachu);
           objetsMissiles.push(m);
         }
       });
@@ -443,7 +448,7 @@ var GF = function(){
       if(inputStates.space) {
         //console.log("space enfoncee");
         generateMonster();
-         etatCourant = etats.jeuEnCours;
+        etatCourant = etats.jeuEnCours;
       }
       break;
 
@@ -561,7 +566,7 @@ function testCollisionWithWalls(elem) {
   // haut
   if (elem.getY() < 0 ) {
     objetsMissiles = [];
-    console.log('loupé');
+  //  console.log('loupé');
   }
 }
 

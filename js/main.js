@@ -1,20 +1,3 @@
-// Inits
-window.onload = function init() {
-  var game = new GF();
-  game.start();
-};
-/* test tom*/
-
-
-var pikachu = new Image();
-//var URL_PIKACHU = './pictures/pikachu.png';
-var URL_PIKACHU = './pictures/pika_mouvement.png';
-pikachu.src = URL_PIKACHU;
-
-var pokemon = new Image();
-var URL_POKEMON = './pictures/pokemon.png';
-pokemon.src = URL_POKEMON;
-
 var currentFrame = 0;  // the current frame to draw
 var counter = 0;       // keep track of frame rate
 var counterY=0;
@@ -25,219 +8,13 @@ var etat_personnage = {
   detruit : 1,
 };
 
-//Definition des objets
-//var mvt_pikachu = [134, 170 ,207,248];
-var mvt_pikachu = [75, 115 ,150,188];
-var mvt_attaque = [78,114,150]
-
 // Var utiles
 var score=0;
 var tempsTotal=0;
 
-function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
-  var x=x1, y=y1, w=w1, h=h1;
-  var ximg=x2, yimg=y2, wimg=w2, himg=w2;
-  var sprite = img;
-  var speed = 1;
-  var etat = etat_personnage.enVie;
-  var mvt=0;
-  var mvt_a=0;
-
-  function draw(ctx) {
-    //ctx.fillRect(x, y, w, h);
-    //ctx.drawImage(sprite, 136, 157, 40, 30, x, y, w, h);
-
-
-    ctx.drawImage(sprite, ximg, yimg, wimg, himg, x, y, w, h);
-  }
-  function getX() {
-    return x;
-  }
-  function setX(x1) {
-    x = x1;
-  }
-  function getY() {
-    return y;
-  }
-  function setY(y1) {
-    y = y1;
-  }
-  function getW() {
-    return w;
-  }
-  function getH() {
-    return h;
-  }
-  function getSpeed(){
-    return speed;
-  }
-  function setSpeed(s1){
-    speed = s1;
-  }
-  function getEtat(){
-    return etat;
-  }
-  function setEtat(e){
-    etat = e;
-  }
-  function getX2() {
-    return ximg;
-  }
-  function setX2() {
-    // code removed for brevity
-    // Update the animation
-    // update to the next frame if it is time
-
-    if (counter == (4 - 1)){
-      ximg = mvt_pikachu [mvt];
-      if (yimg == 133){
-        //droite
-        mvt++;
-        if(mvt > 3){
-          mvt = 0;
-        }
-
-      }
-      else{
-        //gauche
-        mvt--;
-        if(mvt < 0){
-          mvt = 3;
-        }
-      }
-
-    }
-    // update the counter
-    counter = (counter + 1) % 4;
-  }
-
-  function setY2() {
-    if (counterY == (4 - 1)){
-      // gérer le reverse
-      if (deplacement == 1){
-        //gauche
-        yimg = 97;
-      }
-      else{
-        //droite
-        yimg = 133;
-      }
-    }
-    // update the counter
-    counterY = (counterY + 1) % 4;
-  }
-
-  function attentePika(){
-
-    if(deplacement){
-      //gauche
-      ximg = 160;
-      yimg = 241;
-    }else {
-      //droite
-      ximg = 117;
-      yimg = 241;
-    }
-  }
-
-  function attaquePika(){
-
-
-    if (counter == (3 - 1)){
-      ximg = mvt_attaque [mvt_a];
-      if (deplacement == 1){
-        //droite
-        yimg = 205;
-        mvt_a++;
-        if(mvt_a > 2){
-          mvt_a = 0;
-        }
-
-      }
-      else{
-        //gauche
-        yimg=172;
-        mvt_a--;
-        if(mvt_a < 0){
-          mvt_a = 2;
-        }
-      }
-
-    }
-    // update the counter
-    counter = (counter + 1) % 3;
-  }
-
-  return {
-    draw:draw,
-    getSpeed:getSpeed,
-    setSpeed:setSpeed,
-    getX:getX,
-    getY: getY,
-    setX: setX,
-    setY:setY,
-    getW:getW,
-    getH:getH,
-    getEtat:getEtat,
-    setEtat:setEtat,
-    getX2:getX2,
-    setX2:setX2,
-    setY2:setY2,
-    attentePika:attentePika,
-    attaquePika:attaquePika
-  }
-}
-
-function Vaisseau(x, y, w, h, x2, y2, w2, h2, pikachu){
-  var api = new ObjetGraphique(x, y, w, h, x2, y2, w2, h2, pikachu);
-  // redéfinition
-  var superDraw = api.draw;
-
-  api.draw = function(ctx) {
-    //console.log('draw redéfini dans Vaisseau');
-    //ctx.fillStyle = 'red';
-    // appel de la méthode de la pseudo classe mère que l'on
-    // a redéfini
-    superDraw.call(this, ctx);
-  }
-  return api;
-}
-
-function Monstre(x, y, w, h, x2, y2, w2, h2, pokemon){
-  var api = new ObjetGraphique(x, y, w, h, x2, y2, w2, h2, pokemon);
-  // redéfinition
-  var superDraw = api.draw;
-
-  api.draw = function(ctx) {
-    //console.log('draw redéfini dans Monstre');
-    //ctx.fillStyle = 'green';
-    // appel de la méthode de la pseudo classe mère que l'on
-    // a redéfini
-    superDraw.call(this, ctx);
-  }
-  return api;
-}
-
-function Missile(x, y, w, h, x2, y2, w2, h2,pikachu){
-  var api = new ObjetGraphique(x, y, w, h, x2, y2, w2, h2,pikachu);
-  // redéfinition
-  var superDraw = api.draw;
-
-  api.draw = function(ctx) {
-    //console.log('draw redéfini dans Monstre');
-    //ctx.fillStyle = 'blue';
-    // appel de la méthode de la pseudo classe mère que l'on
-    // a redéfini
-    superDraw.call(this, ctx);
-  }
-  return api;
-}
-
-
 // GAME FRAMEWORK STARTS HERE
-var GF = function(){
-  // Vars relative to the canvas
-  var canvas, ctx, w, h;
+var GF = function(interface,pokemon,pikachu){
+
 
   // etat du jeu
   var etats = {
@@ -252,7 +29,7 @@ var GF = function(){
   // vars for counting frames/s, used by the measureFPS function
   var frameCount = 0;
   var lastTime;
-  var fpsContainer;
+  //var fpsContainer;
   var fps;
   // for time based animation
   var delta, oldTime = 0;
@@ -263,14 +40,15 @@ var GF = function(){
   var objetsGraphiques = [];
   var objetsMonstres = [];
 
-  var generateMonster = function(){
-    for(var i=1; i<=5; i++){
-      for (var j=1; j<=10; j++){
-        var monstre = new Monstre(j*64, i*64, 64, 64, 319, 133, 64, 64, pokemon);
-        objetsMonstres.push(monstre);
-      }
-    }
-  }
+  // var generateMonster = function(){
+  //   for(var i=1; i<=5; i++){
+  //     for (var j=1; j<=10; j++){
+  //       var monstre = new Monstre(j*64, i*64, 64, 64, 319, 133, 64, 64, pokemon);
+  //       objetsMonstres.push(monstre);
+  //     }
+  //   }
+  // }
+  generateMonster(pokemon,objetsMonstres);
 
   var objetsVaisseaux = [];
   //var vaisseau = new Vaisseau(600, 500, 80, 66, 135, 156, 40, 32, pikachu);
@@ -312,12 +90,12 @@ var GF = function(){
     fpsContainer.innerHTML = 'FPS: ' + fps;
     frameCount++;
   };
-
+/*
   // clears the canvas content
   function clearCanvas() {
     ctx.clearRect(0, 0, w, h);
   }
-
+*/
 
   var measureScore = function(){
 
@@ -358,7 +136,7 @@ var GF = function(){
 
   var mainLoop = function(time){
     // Clear the canvas
-    clearCanvas();
+    interface.clearCanvas();
 
     switch(etatCourant) {
       case etats.jeuEnCours:
@@ -531,18 +309,6 @@ function rectsOverlap(x0, y0, w0, h0, x2, y2, w2, h2) {
   }
 }
 
-// Collisions between rectangle and circle
-/*function circRectsOverlap(x0, y0, w0, h0, cx, cy, r) {
-var testX=cx;
-var testY=cy;
-
-if (testX < x0) testX=x0;
-if (testX > (x0+w0)) testX=(x0+w0);
-if (testY < y0) testY=y0;
-if (testY > (y0+h0)) testY=(y0+h0);
-
-return (((cx-testX)*(cx-testX)+(cy-testY)*(cy-testY))<r*r);
-}*/
 
 function testCollisionWithWalls(elem) {
   // left
@@ -561,7 +327,7 @@ function testCollisionWithWalls(elem) {
   // haut
   if (elem.getY() < 0 ) {
     objetsMissiles = [];
-    console.log('loupé');
+//    console.log('loupé');
   }
 }
 
@@ -588,30 +354,7 @@ function getMousePos(evt) {
 }
 
 var start = function(){
-  // adds a div for displaying the fps value
-  fpsContainer = document.createElement('div');
-  document.body.appendChild(fpsContainer);
 
-
-  //Score
-  scoreContainer = document.createElement('div');
-  document.body.appendChild(scoreContainer);
-
-  //Curent time
-  timeContainer = document.createElement('div');
-  document.body.appendChild(timeContainer);
-
-  // Canvas, context etc.
-  canvas = document.querySelector("#myCanvas");
-
-  // often useful
-  w = canvas.width;
-  h = canvas.height;
-
-  // important, we will draw with this object
-  ctx = canvas.getContext('2d');
-  // default police for text
-  ctx.font="20px Arial";
 
   //on génère les monstres
   generateMonster();
