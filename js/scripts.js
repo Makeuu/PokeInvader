@@ -1,9 +1,16 @@
+////////////////////////
+//       Ne           //
+//       Pas          //
+//       Toucher      //
+//       Reprise      //
+////////////////////////
+
+
 // Inits
 window.onload = function init() {
   var game = new GF();
   game.start();
 };
-/* test tom*/
 
 
 var pikachu = new Image();
@@ -28,7 +35,11 @@ var etat_personnage = {
 //Definition des objets
 //var mvt_pikachu = [134, 170 ,207,248];
 var mvt_pikachu = [75, 115 ,150,188];
+var mvt_attaque = [78,114,150]
 
+// Var utiles
+var score=0;
+var tempsTotal=0;
 
 function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   var x=x1, y=y1, w=w1, h=h1;
@@ -37,12 +48,9 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   var speed = 1;
   var etat = etat_personnage.enVie;
   var mvt=0;
+  var mvt_a=0;
 
   function draw(ctx) {
-    //ctx.fillRect(x, y, w, h);
-    //ctx.drawImage(sprite, 136, 157, 40, 30, x, y, w, h);
-
-
     ctx.drawImage(sprite, ximg, yimg, wimg, himg, x, y, w, h);
   }
   function getX() {
@@ -110,11 +118,11 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     if (counterY == (4 - 1)){
       // gérer le reverse
       if (deplacement == 1){
-        //droite
+        //gauche
         yimg = 97;
       }
       else{
-        //gauche
+        //droite
         yimg = 133;
       }
     }
@@ -123,13 +131,44 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
   }
 
   function attentePika(){
+
     if(deplacement){
-      ximg = 205;
-      yimg = 172;
+      //gauche
+      ximg = 160;
+      yimg = 241;
     }else {
-      ximg = 170;
-      yimg = 172;
+      //droite
+      ximg = 117;
+      yimg = 241;
     }
+  }
+
+  function attaquePika(){
+
+
+    if (counter == (3 - 1)){
+      ximg = mvt_attaque [mvt_a];
+      if (deplacement == 1){
+        //droite
+        yimg = 205;
+        mvt_a++;
+        if(mvt_a > 2){
+          mvt_a = 0;
+        }
+
+      }
+      else{
+        //gauche
+        yimg=172;
+        mvt_a--;
+        if(mvt_a < 0){
+          mvt_a = 2;
+        }
+      }
+
+    }
+    // update the counter
+    counter = (counter + 1) % 3;
   }
 
   return {
@@ -147,7 +186,8 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     getX2:getX2,
     setX2:setX2,
     setY2:setY2,
-    attentePika:attentePika
+    attentePika:attentePika,
+    attaquePika:attaquePika
   }
 }
 
@@ -207,6 +247,7 @@ var GF = function(){
     menuPrincipal : 0,
     jeuEnCours : 1,
     gameOver : 2,
+    win : 3
   };
 
   var etatCourant = etats.jeuEnCours;
@@ -224,10 +265,13 @@ var GF = function(){
 
   var objetsGraphiques = [];
   var objetsMonstres = [];
-  for(var i=1; i<=5; i++){
-    for (var j=1; j<=10; j++){
-      var monstre = new Monstre(j*64, i*64, 64, 64, 319, 133, 64, 64, pokemon);
-      objetsMonstres.push(monstre);
+
+  var generateMonster = function(){
+    for(var i=1; i<=5; i++){
+      for (var j=1; j<=10; j++){
+        var monstre = new Monstre(j*64, i*64, 64, 64, 319, 133, 64, 64, pokemon);
+        objetsMonstres.push(monstre);
+      }
     }
   }
 
@@ -272,17 +316,50 @@ var GF = function(){
     frameCount++;
   };
 
+
   // clears the canvas content
   function clearCanvas() {
     ctx.clearRect(0, 0, w, h);
   }
 
+
+  var measureScore = function(){
+
+
+    //vitesse du monster
+    scoreContainer.innerHTML = 'Score: ' + score;
+  };
+
+  var curentTime = function(delta){
+
+    tempsTotal += delta;
+    //  ctx.fillText((tempsTotal/1000).toFixed(2) , 100, 100);
+    var cTime= (tempsTotal/1000).toFixed(0);
+    timeContainer.innerHTML = 'Time : '+cTime;
+
+    return cTime;
+  };
+
+
+  var resetVar = function(){
+    tempsTotal-=tempsTotal;
+    ballArrayIndice=0;
+    score=0;
+    ballEaten=0;
+  }
+
   function timer(currentTime) {
+
     var delta = currentTime - oldTime;
     oldTime = currentTime;
+    //on incrémente notre temps total
+    curentTime(delta);
+
+
     return delta;
 
   }
+
   var mainLoop = function(time){
     // Clear the canvas
     clearCanvas();
@@ -295,15 +372,26 @@ var GF = function(){
       // number of ms since last frame draw
       delta = timer(time);
 
-      objetsMonstres.forEach(function f(elem, index) {
-        //Dessiner
-        if(elem.getEtat() == etat_personnage.enVie){
-          elem.draw(ctx);
-        }
-        updateMonstre(delta, elem, index);
-        //Update les positions
-        //Test des collisions
-      });
+      // Test s'il reste des monstres
+      if(objetsMonstres.length){
+        // s'il en reste on les fait bouger
+
+        objetsMonstres.forEach(function f(elem, index) {
+          //Dessiner
+          if(elem.getEtat() == etat_personnage.enVie){
+            elem.draw(ctx);
+          }
+          updateMonstre(delta, elem, index);
+          //Update les positions
+          //Test des collisions
+        });
+      }
+      else {
+        // sinon fin de partie
+        console.log("win");
+        etatCourant=etats.win;
+      }
+
       objetsVaisseaux.forEach(function f(elem) {
         //Dessiner
         elem.draw(ctx);
@@ -312,9 +400,9 @@ var GF = function(){
         if(inputStates.space && (objetsMissiles.length < 1)) {
           // TOM attaque
 
-          var m = new Missile(elem.getX() + 20, elem.getY()-66, 23, 50, 73, 215, 23, 35, pikachu); // 66-> taille de pika
+          var m = new Missile(elem.getX() + 20, elem.getY()-66, 23, 50, 73, 241, 23, 35, pikachu); // 66-> taille de pika
 
-        //  var m = new Missile(elem.getX(), elem.getY(), 10, 10, 136, 157, 10, 10, pikachu);
+          //  var m = new Missile(elem.getX(), elem.getY(), 10, 10, 136, 157, 10, 10, pikachu);
           objetsMissiles.push(m);
         }
       });
@@ -324,15 +412,41 @@ var GF = function(){
         updateMissiles(delta, elem);
         //Test des collisions
       });
+
+
+      //score
+      measureScore();
+
       break;
       case etats.gameOver:
       //console.log("GAME OVER");
       ctx.fillText("GAME OVER", 100, 100);
       ctx.fillText("Press SPACE to start again", 100, 150);
 
+      // on reset les variable
+      resetVar();
+
       if(inputStates.space) {
         //console.log("space enfoncee");
-        createBalls(4);
+        generateMonster();
+        etatCourant = etats.jeuEnCours;
+      }
+
+
+      break;
+
+      case etats.win:
+      //console.log("GAME OVER");
+      ctx.fillText("YOU WIN", 100, 100);
+      ctx.fillText("Press SPACE to start again", 100, 150);
+
+
+      // on reset les variable
+      resetVar();
+
+      if(inputStates.space) {
+        //console.log("space enfoncee");
+        generateMonster();
         etatCourant = etats.jeuEnCours;
       }
       break;
@@ -363,6 +477,8 @@ var GF = function(){
     deplacement=0;
     elem.setY2();
     elem.setX2();
+  }else if (inputStates.space){
+    elem.attaquePika();
   }else{
     elem.attentePika();
   }
@@ -375,6 +491,7 @@ var GF = function(){
 }
 
 function updateMonstre(delta, elem, index) {
+
   // 1) move the ball
   elem.setX(elem.getX() + 2*elem.getSpeed() );
 
@@ -384,6 +501,7 @@ function updateMonstre(delta, elem, index) {
   // 3 test avec missiles
   if(objetsMissiles.length > 0){
     testCollisionAvecMonstre(objetsMissiles[0], elem, index);
+
   }
 }
 
@@ -447,7 +565,7 @@ function testCollisionWithWalls(elem) {
   // haut
   if (elem.getY() < 0 ) {
     objetsMissiles = [];
-    console.log('loupé');
+  //  console.log('loupé');
   }
 }
 
@@ -457,7 +575,10 @@ function testCollisionAvecMonstre(elem, monster, index){
     objetsMonstres.splice(index,1);
     objetsMissiles.splice(0,1);
     elem.setEtat(etat_personnage.detruit);
-    console.log('SHOOT');
+    //console.log('SHOOT');
+
+    // on incrémente le score
+    score+=10;
   }
 }
 
@@ -475,6 +596,15 @@ var start = function(){
   fpsContainer = document.createElement('div');
   document.body.appendChild(fpsContainer);
 
+
+  //Score
+  scoreContainer = document.createElement('div');
+  document.body.appendChild(scoreContainer);
+
+  //Curent time
+  timeContainer = document.createElement('div');
+  document.body.appendChild(timeContainer);
+
   // Canvas, context etc.
   canvas = document.querySelector("#myCanvas");
 
@@ -486,6 +616,9 @@ var start = function(){
   ctx = canvas.getContext('2d');
   // default police for text
   ctx.font="20px Arial";
+
+  //on génère les monstres
+  generateMonster();
 
   //add the listener to the main, window object, and update the states
   window.addEventListener('keydown', function(event){
@@ -499,6 +632,10 @@ var start = function(){
       inputStates.down = true;
     }  else if (event.keyCode === 32) {
       inputStates.space = true;
+
+      // On l'empêche de bouger
+      inputStates.left=false;
+      inputStates.right=false;
     }
   }, false);
 
@@ -543,3 +680,4 @@ return {
   start: start
 };
 };
+>>>>>>> 36bedbbfee90d6aa0ea7b92f813903bbaa2c2193
