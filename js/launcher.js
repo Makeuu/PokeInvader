@@ -35,12 +35,13 @@ window.onload = function init() {
   //Variable globales
 
   //Lancement
+  var test=false;
   var game = new GF(interface,pokemon,pikachu);
 
   if(game.start()){
-    console.log("interface loaded");
+    console.log("game loaded");
   }else{
-    console.log("interface error");
+    console.log("game error");
   }
 
 };

@@ -14,7 +14,6 @@ function ObjetGraphique(x1, y1, w1, h1, x2, y2, w2, h2, img) {
     //ctx.fillRect(x, y, w, h);
     //ctx.drawImage(sprite, 136, 157, 40, 30, x, y, w, h);
 
-
     ctx.drawImage(sprite, ximg, yimg, wimg, himg, x, y, w, h);
   }
   function getX() {
