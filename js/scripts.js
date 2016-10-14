@@ -565,7 +565,7 @@ function testCollisionWithWalls(elem) {
   // haut
   if (elem.getY() < 0 ) {
     objetsMissiles = [];
-  //  console.log('loupé');
+    //  console.log('loupé');
   }
 }
 
@@ -680,4 +680,3 @@ return {
   start: start
 };
 };
->>>>>>> 36bedbbfee90d6aa0ea7b92f813903bbaa2c2193
