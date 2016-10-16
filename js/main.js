@@ -124,7 +124,6 @@ var GF = function(interface,menu,pokemon,pikachu,openning,combat){
       }
       else {
         // sinon fin de partie
-        console.log("win");
         etatCourant=etats.win;
       }
 
