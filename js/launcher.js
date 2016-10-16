@@ -27,6 +27,19 @@ window.onload = function init() {
   var URL_POKEMON = './pictures/pokemon.png';
   pokemon.src = URL_POKEMON;
 
+  var menu = new Image();
+  var URL_MENU = './pictures/menu.jpg';
+  menu.src = URL_MENU;
+
+// Fichiers audio
+var openning = new Audio("./sounds/Openning.mp3");
+openning.loop = true;
+openning.volume = .25;
+openning.load();
+var combat = new Audio("./sounds/Combat.mp3");
+combat.loop = true;
+combat.volume = .25;
+combat.load();
   //Lancement
 
 
@@ -36,7 +49,7 @@ window.onload = function init() {
 
   //Lancement
   var test=false;
-  var game = new GF(interface,pokemon,pikachu);
+  var game = new GF(interface,menu,pokemon,pikachu,openning,combat);
 
   if(game.start()){
     console.log("game loaded");

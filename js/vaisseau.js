@@ -28,8 +28,8 @@ else if (inputStates.right) {
 elem.speed = 100;
 // COmpute the incX and inY in pixels depending
 // on the time elasped since last redraw
-elem.setX(elem.getX() + calcDistanceToMove(delta, elem.speedX));
-elem.setY(elem.getY() + calcDistanceToMove(delta, elem.speedY));
+elem.setX(elem.getX() + calcDistanceToMove(delta, elem.speedX*2));
+elem.setY(elem.getY() + calcDistanceToMove(delta, elem.speedY*2));
 }
 
 function Vaisseau(x, y, w, h, x2, y2, w2, h2, pikachu){

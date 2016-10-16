@@ -15,6 +15,8 @@ var tempsTotal=0;
 //Tab
 var objetsGraphiques = [];
 var objetsMonstres = [];
+var objetsMissiles = [];
+var objetsMissilesEnnemies = [];
 
 // vars for handling inputs
 var inputStates = {};
@@ -28,7 +30,7 @@ var fps;
 var delta, oldTime = 0;
 
 // GAME FRAMEWORK STARTS HERE
-var GF = function(interface,pokemon,pikachu){
+var GF = function(interface,menu,pokemon,pikachu,openning,combat){
 
   // etat du jeu
   var etats = {
@@ -38,7 +40,8 @@ var GF = function(interface,pokemon,pikachu){
     win : 3
   };
 
-  var etatCourant = etats.jeuEnCours;
+
+  var etatCourant = etats.menuPrincipal;
 
   var objetsVaisseaux = [];
   var vaisseau = new Vaisseau(600, 500, 80, 66, 75, 133, 35.5, 32, pikachu);
@@ -46,7 +49,7 @@ var GF = function(interface,pokemon,pikachu){
   objetsVaisseaux.push(vaisseau);
 
   // array of balls to animate
-  var objetsMissiles = [];
+
 
   var measureScore = function(){
 
@@ -82,12 +85,31 @@ var GF = function(interface,pokemon,pikachu){
     interface.clearCanvas();
 
     switch(etatCourant) {
+      case etats.menuPrincipal:
+      //console.log("GAME OVER");
+      ctx.drawImage(menu, 0,0,1200,600);
+      ctx.fillText("Poke - Invader", 500, 150);
+      ctx.fillText("Press SPACE to start the game", 500, 200);
+      openning.play();
+      combat.pause();
+
+      // on reset les variable
+
+      if(inputStates.space) {
+        //console.log("space enfoncee");
+        resetVar();
+        etatCourant = etats.jeuEnCours;
+      }
+      break;
+
       case etats.jeuEnCours:
       //main function, called each frame
       measureFPS(time);
 
       // number of ms since last frame draw
       delta = timer(time);
+      openning.pause();
+      combat.play();
 
       // Test s'il reste des monstres
       if(objetsMonstres.length){
@@ -97,10 +119,7 @@ var GF = function(interface,pokemon,pikachu){
           if(elem.getEtat() == etat_personnage.enVie){
             elem.draw(ctx);
           }
-
           updateMonstre(delta, elem, index);
-
-
         });
       }
       else {
@@ -128,34 +147,35 @@ var GF = function(interface,pokemon,pikachu){
         elem.draw(ctx);
         updateMissiles(delta, elem);
       });
-
+      objetsMissilesEnnemies.forEach(function f(elem) {
+        //Dessiner
+        elem.draw(ctx);
+        updateMissilesEnnemies(delta, elem);
+      });
 
       //score
       measureScore();
 
       break;
       case etats.gameOver:
-      //console.log("GAME OVER");
+      // log("GAME OVER");
       ctx.fillText("GAME OVER", 100, 100);
       ctx.fillText("Press SPACE to start again", 100, 150);
 
       // on reset les variable
       resetVar();
-
       if(inputStates.space) {
-        //console.log("space enfoncee");
         generateMonster(pokemon);
         etatCourant = etats.jeuEnCours;
       }
 
-
       break;
-
       case etats.win:
       //console.log("GAME OVER");
       ctx.fillText("YOU WIN", 100, 100);
       ctx.fillText("Press SPACE to start again", 100, 150);
-
+      openning.pause();
+      combat.pause();
 
       // on reset les variable
       resetVar();
@@ -184,6 +204,11 @@ var GF = function(interface,pokemon,pikachu){
       testCollisionAvecMonstre(objetsMissiles[0], elem, index);
 
     }
+    if(getRandomInt(0,750) == 0){
+      // Tire un missiles ennemies
+      var m = new Missile(elem.getX() + 20, elem.getY()-66, 23, 50, 73, 241, 23, 35, pikachu); // 66-> taille de pika
+      objetsMissilesEnnemies.push(m);
+    }
   }
 
   function updateMissiles(delta, elem) {
@@ -191,6 +216,17 @@ var GF = function(interface,pokemon,pikachu){
     elem.setY(elem.getY() - 10 );
 
     testCollisionWithWalls(elem);
+  }
+
+  function updateMissilesEnnemies(delta, elem) {
+
+    elem.setY(elem.getY() + 5 );
+
+    testCollisionWithWalls(elem);
+
+    if(rectsOverlap(elem.getX(), elem.getY(), elem.getW(), elem.getH(), vaisseau.getX(), vaisseau.getY(), vaisseau.getW(), vaisseau.getH())){
+      etatCourant = etats.gameOver;
+    }
   }
 
 
@@ -210,13 +246,13 @@ var GF = function(interface,pokemon,pikachu){
     // left
     if (elem.getX() < (elem.getW()*-1) ) {
       elem.setSpeed(1);
-      elem.setY(elem.getY()+10);
+      elem.setY(elem.getY()+15);
 
     }
     // right
     if (elem.getX() > canvas.width ) {
       elem.setSpeed(-1);
-      elem.setY(elem.getY()+10);
+      elem.setY(elem.getY()+15);
 
 
     }

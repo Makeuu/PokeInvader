@@ -28,7 +28,17 @@ var measureFPS = function(newTime){
 
 var resetVar = function(){
   tempsTotal-=tempsTotal;
-  ballArrayIndice=0;
   score=0;
-  ballEaten=0;
+  tempsTotal=0;
+  //Tab
+  objetsGraphiques = [];
+  objetsMonstres = [];
+  objetsMissiles = [];
+  objetsMissilesEnnemies = [];
+}
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
 }
