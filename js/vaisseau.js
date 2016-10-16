@@ -3,8 +3,9 @@ function updateVaisseauPosition(delta, elem) {
   // check inputStates
   if (inputStates.left) {
     //ctx.scale(-1,1);
-    elem.speedX = -elem.speed;
-
+    if(elem.getX()>0){// on empêche pikachu de sortir de l'écran
+      elem.speedX = -elem.speed;
+    }
     deplacement=1;
     elem.setY2();
     elem.setX2();
@@ -13,12 +14,13 @@ function updateVaisseauPosition(delta, elem) {
   elem.speedY = -elem.speed;
 }*/
 else if (inputStates.right) {
+  if(elem.getX()<w-75){// on empêche pikachu de sortir de l'écran
   elem.speedX = elem.speed;
+}
 
-
-  deplacement=0;
-  elem.setY2();
-  elem.setX2();
+deplacement=0;
+elem.setY2();
+elem.setX2();
 }else if (inputStates.space){
   elem.attaquePika();
 }else{
